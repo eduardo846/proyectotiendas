@@ -159,6 +159,7 @@
   .staff-content { padding-top: 23px; }
   .staff-record { align-items: flex-start; flex-direction: column; }
   .staff-record-actions { width: 100%; }
+  .staff-panel-heading { flex-wrap: wrap; }
   .staff-user-controls { grid-template-columns: minmax(0, 1fr); }
   .staff-user-actions { align-items: stretch; flex-direction: column; }
   .staff-user-actions button { width: 100%; }

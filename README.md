@@ -41,6 +41,12 @@ Sin variables Firebase, la tienda muestra el catálogo local como vista previa y
    npm run test:rules
    ```
 
+   Las pruebas de la aplicación recorren la tienda y el portal en Chromium (escritorio y móvil) contra los emuladores de Firestore y Auth, con la compilación de producción. La primera vez instala el navegador con `npx playwright install chromium`:
+
+   ```bash
+   npm run test:e2e
+   ```
+
    Las pruebas marcadas como `todo` documentan riesgos conocidos que las reglas aún no cubren y no hacen fallar la ejecución. Una solicitud admite hasta 15 líneas distintas (producto y tamaño) porque Firestore evalúa como máximo 1000 expresiones por petición; `MAX_ORDER_LINES` en `src/firebase.js` debe coincidir con `validOrderItems` en `firestore.rules`.
 
    En un proyecto nuevo, inicializa el primer perfil administrador desde Firebase Console en Firestore, en `usuarios/{UID}`. Crea la cuenta en Authentication y un documento con campos `email` (string), `nombre` (string), `rol` (`admin`), `activo` (true), `creadoEn` (timestamp), `creadoPor` (string) y `actualizadoEn` (timestamp). Firebase Console utiliza privilegios administrativos y puede crear este perfil inicial sin reglas. El administrador existente de este proyecto ya tiene un custom claim `admin` y puede registrar su perfil en el panel si hace falta.
@@ -83,7 +89,7 @@ Sin variables Firebase, la tienda muestra el catálogo local como vista previa y
 
 - `configuracion/tienda`: nombre, identidad, WhatsApp, tamaños, moneda y tarifas de envío.
 - `categorias/{slug}`: nombre, posición y estado de publicación. Los productos guardan `categoriaId`, evitando duplicar nombres de categoría.
-- `productos/{id}`: nombre, descripción, referencia, imagen, precio en COP, `categoriaId`, popularidad y estado activo. El documento usa el ID estable del catálogo como clave.
+- `productos/{id}`: nombre, descripción, referencia, imagen, `precios` (mapa de tamaño a precio en COP, por ejemplo `{"Personal": 22000, "Mediana": 32000, "Familiar": 45000}`), `categoriaId`, popularidad y estado activo. El documento usa el ID estable del catálogo como clave. Un tamaño sin precio no se ofrece para ese producto. Los productos cargados antes de los precios por tamaño solo tienen `precio` y lo usan en todos los tamaños hasta que se editan en `/staff`; al guardarlos, el panel reemplaza `precio` por `precios`. En `catalogo.json`, cada producto puede usar `precios` (o `precio`, que se carga como precio único).
 - `promociones/{id}`: descripción, tipo, estado, orden y condiciones declarativas. La promoción inicial es informativa: el catálogo no especifica un valor de descuento.
 - `pedidos/{id}`: la tienda guarda solicitudes pendientes con datos de contacto, `items` (solo `productoId`, `tamano`, `cantidad`), pago, notas, `estado: pendiente_revision`, `preciosVerificados: false` y fecha. La consola los muestra en cola FIFO, del más antiguo al más reciente. Los precios y totales del resumen del cliente son estimados y no se guardan como valores confiables. La función opcional de servidor puede guardar pedidos verificados en un esquema más completo.
 - Estados del pedido: administradores y vendedores pueden actualizar pedidos, incluidos los estados entregado y cerrado. Una vez que un vendedor marque un pedido como entregado o cerrado, solo un administrador podrá volver a modificar su estado. Los pedidos entregados dejan de mostrarse en la consola del vendedor, pero permanecen disponibles para el administrador. El cambio de estado no verifica ni altera los precios.

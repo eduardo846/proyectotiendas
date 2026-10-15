@@ -98,8 +98,10 @@ export const createOrder = onCall(
     const items = input.items.map((item) => {
       const product = products.get(item.productoId);
       if (!sizes.includes(item.tamano)) invalidArgument("El tamaño seleccionado no está disponible.");
-      if (!Number.isSafeInteger(product.precio) || product.precio < 0 ||
-          !Number.isSafeInteger(product.precio * item.cantidad)) {
+      // Igual que src/pricing.js: `precios` por tamaño, o el precio único anterior.
+      const price = product.precios ? product.precios[item.tamano] : product.precio;
+      if (price === undefined) invalidArgument("El tamaño seleccionado no está disponible para este producto.");
+      if (!Number.isSafeInteger(price) || price < 0 || !Number.isSafeInteger(price * item.cantidad)) {
         throw new HttpsError("failed-precondition", "Un producto tiene un precio inválido.");
       }
       return {
@@ -108,8 +110,8 @@ export const createOrder = onCall(
         referencia: product.referencia,
         tamano: item.tamano,
         cantidad: item.cantidad,
-        precioUnitario: product.precio,
-        totalLinea: product.precio * item.cantidad,
+        precioUnitario: price,
+        totalLinea: price * item.cantidad,
       };
     });
 

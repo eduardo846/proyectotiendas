@@ -5,3 +5,6 @@ dist/
 !.env.example
 firebase-debug.log
 firestore-debug.log
+.e2e-dist/
+test-results/
+playwright-report/

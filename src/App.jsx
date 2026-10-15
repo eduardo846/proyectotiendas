@@ -6,6 +6,7 @@ import {
   MAX_ORDER_LINES,
   savePendingOrder,
 } from "./firebase.js";
+import { getAvailableSizes, getSizePrice } from "./pricing.js";
 
 const normalize = (value) =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -15,7 +16,7 @@ function getTotals(cart, products, store) {
   const items = Object.values(cart);
   const subtotal = items.reduce((sum, item) => {
     const product = products.find((entry) => entry.id === item.id);
-    return sum + product.precio * item.quantity;
+    return sum + getSizePrice(product, item.size) * item.quantity;
   }, 0);
   const delivery = subtotal >= store.envioGratis ? 0 : store.costoEnvio;
   return { count: items.reduce((sum, item) => sum + item.quantity, 0), subtotal, delivery, total: subtotal + delivery };
@@ -87,7 +88,12 @@ export default function App() {
   }, [cartOpen, lightboxOpen, modalProduct]);
 
   const store = data?.tienda;
-  const products = data?.productos ?? [];
+  // Un producto sin precio en ningún tamaño de la tienda no se puede pedir.
+  const products = useMemo(
+    () => (data?.productos ?? []).filter((product) =>
+      getAvailableSizes(product, data.tienda.tamanos).length > 0),
+    [data],
+  );
   const totals = useMemo(
     () => (store ? getTotals(cart, products, store) : { count: 0, subtotal: 0, delivery: 0, total: 0 }),
     [cart, products, store],
@@ -213,11 +219,11 @@ export default function App() {
       setToast("Solicitud guardada. El pedido se limpió y se abrirá WhatsApp.");
       const estimatedItems = requestedItems.map((item) => {
         const product = products.find((entry) => String(entry.id) === item.productoId);
-        return `• ${product.nombre} (Ref. ${product.referencia} · Tamaño ${item.tamano}) x${item.cantidad} — ${formatPrice(product.precio * item.cantidad)}`;
+        return `• ${product.nombre} (Ref. ${product.referencia} · Tamaño ${item.tamano}) x${item.cantidad} — ${formatPrice(getSizePrice(product, item.tamano) * item.cantidad)}`;
       });
       const estimatedSubtotal = requestedItems.reduce((subtotal, item) => {
         const product = products.find((entry) => String(entry.id) === item.productoId);
-        return subtotal + product.precio * item.cantidad;
+        return subtotal + getSizePrice(product, item.tamano) * item.cantidad;
       }, 0);
       const estimatedDelivery = estimatedSubtotal >= store.envioGratis ? 0 : store.costoEnvio;
       const message = [
@@ -341,7 +347,8 @@ export default function App() {
           {filteredProducts.length ? (
             <div className="product-grid">
               {filteredProducts.map((product) => {
-                const size = selectedSizes[product.id] ?? store.tamanos[0];
+                const sizes = getAvailableSizes(product, store.tamanos);
+                const size = sizes.includes(selectedSizes[product.id]) ? selectedSizes[product.id] : sizes[0];
                 return (
                   <article className="product-card" key={product.id}>
                     <button
@@ -367,7 +374,7 @@ export default function App() {
                       <span className="product-reference">Ref. {product.referencia}</span>
                       <p className="product-description">{product.descripcion}</p>
                       <div className="size-options" aria-label={`Tamaño para ${product.nombre}`}>
-                        {store.tamanos.map((option) => (
+                        {sizes.map((option) => (
                           <button
                             key={option}
                             className={`size-chip${size === option ? " selected" : ""}`}
@@ -380,7 +387,7 @@ export default function App() {
                         ))}
                       </div>
                       <div className="product-footer">
-                        <strong>{formatPrice(product.precio)}</strong>
+                        <strong>{formatPrice(getSizePrice(product, size))}</strong>
                         <button
                           className="add-button"
                           type="button"
@@ -449,7 +456,7 @@ export default function App() {
                     <div className="cart-item-info">
                       <strong>{product.nombre}</strong>
                       <span>{item.size} · Ref. {product.referencia}</span>
-                      <b>{formatPrice(product.precio * item.quantity)}</b>
+                      <b>{formatPrice(getSizePrice(product, item.size) * item.quantity)}</b>
                     </div>
                     <div className="quantity-control">
                       <button type="button" onClick={() => changeQuantity(key, -1)} aria-label={`Quitar una ${product.nombre}`}>−</button>
@@ -491,8 +498,8 @@ export default function App() {
               <label>Dirección de entrega y notas
                 <textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder="Dirección, apartamento u observaciones" maxLength={1000} />
               </label>
-                      <button className="whatsapp-button" type="submit" disabled={submitting || !firestoreReady}>
-                        {submitting ? "Guardando solicitud…" : !firestoreReady ? "Firestore no está disponible" : "Guardar solicitud y continuar por WhatsApp"}
+              <button className="whatsapp-button" type="submit" disabled={submitting || !firestoreReady}>
+                {submitting ? "Guardando solicitud…" : !firestoreReady ? "Firestore no está disponible" : "Guardar solicitud y continuar por WhatsApp"}
               </button>
             </form>
           </section>
@@ -510,10 +517,10 @@ export default function App() {
             </button>
             <h2 id="product-modal-title">{modalProduct.nombre}</h2>
             <p className="product-reference">Ref. {modalProduct.referencia}</p>
-            <strong className="modal-price">{formatPrice(modalProduct.precio)}</strong>
+            <strong className="modal-price">{formatPrice(getSizePrice(modalProduct, modalSize))}</strong>
             <h3>Elige el tamaño</h3>
             <div className="size-options">
-              {store.tamanos.map((size) => (
+              {getAvailableSizes(modalProduct, store.tamanos).map((size) => (
                 <button className={`size-chip${modalSize === size ? " selected" : ""}`} key={size} type="button" onClick={() => setModalSize(size)} aria-pressed={modalSize === size}>{size}</button>
               ))}
             </div>

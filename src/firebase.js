@@ -2,7 +2,9 @@ import { initializeApp } from "firebase/app";
 import {
   addDoc,
   collection,
+  connectFirestoreEmulator,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -15,6 +17,7 @@ import {
   where,
 } from "firebase/firestore/lite";
 import {
+  connectAuthEmulator,
   getAuth,
   onAuthStateChanged,
   sendPasswordResetEmail,
@@ -37,6 +40,11 @@ export const isFirebaseConfigured = requiredConfig.every((value) => Boolean(valu
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
 const db = app ? getFirestore(app) : null;
 const auth = app ? getAuth(app) : null;
+// Solo para pruebas locales (npm run test:e2e): usa los emuladores de Firebase.
+if (app && import.meta.env.VITE_FIREBASE_EMULATORS === "true") {
+  connectFirestoreEmulator(db, "127.0.0.1", 8080);
+  connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+}
 
 function requireFirebase() {
   if (!db) throw new Error("Firebase no está configurado.");
@@ -277,7 +285,10 @@ export async function saveStaffProduct(product, productId) {
   requireFirebase();
   const values = { ...product, actualizadoEn: serverTimestamp() };
   if (productId) {
-    await setDoc(doc(db, "productos", productId), values, { merge: true });
+    // mergeFields reemplaza el mapa `precios` completo (merge lo combinaría y
+    // conservaría tamaños quitados) y elimina el precio único anterior.
+    const update = { ...values, precio: deleteField() };
+    await setDoc(doc(db, "productos", productId), update, { mergeFields: Object.keys(update) });
     return productId;
   }
   const created = await addDoc(collection(db, "productos"), values);
@@ -355,6 +366,7 @@ export async function updateStaffOrderStatus(orderId, status) {
     "preparando",
     "en_camino",
     "entregado",
+    "cerrado",
     "cancelado",
   ];
   if (typeof orderId !== "string" || !orderId || !statuses.includes(status)) {

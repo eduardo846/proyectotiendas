@@ -64,8 +64,13 @@ function validateCatalog() {
     if (!categories.has(categoryId(product.categoria))) {
       throw new Error(`Categoría inexistente para el producto ${product.referencia}.`);
     }
-    if (!Number.isInteger(product.precio) || product.precio < 0) {
-      throw new Error(`Precio inválido para el producto ${product.referencia}.`);
+    // `precios` por tamaño; `precio` único se admite para catálogos anteriores.
+    const prices = product.precios ?? (product.precio === undefined ? undefined : { [store.tamanos[0]]: product.precio });
+    if (!prices || typeof prices !== "object" || Object.keys(prices).length === 0 ||
+        (product.precios && product.precio !== undefined) ||
+        Object.entries(prices).some(([size, price]) =>
+          (product.precios && !store.tamanos.includes(size)) || !Number.isSafeInteger(price) || price < 0)) {
+      throw new Error(`Precios inválidos para el producto ${product.referencia}: usa "precios" con los tamaños ${store.tamanos.join(", ")}.`);
     }
     try {
       if (new URL(product.imagen).protocol !== "https:") {

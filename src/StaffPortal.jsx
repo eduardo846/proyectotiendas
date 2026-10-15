@@ -20,6 +20,7 @@ import {
   updateStaffOrderStatus,
   updateStaffUserProfile,
 } from "./firebase.js";
+import { getAvailableSizes, getSizePrice } from "./pricing.js";
 import "./staff.css";
 
 const orderStatuses = [
@@ -35,7 +36,23 @@ const finalOrderStatuses = new Set(["entregado", "cerrado"]);
 const orderStatusLabel = (status) =>
   orderStatuses.find((entry) => entry.value === status)?.label ?? status ?? "Pendiente de revisión";
 
+// Firebase devuelve invalid-credential con la protección contra enumeración de
+// correos activa y los códigos específicos sin ella.
+const wrongCredentials = "Correo o contraseña incorrectos.";
+const loginErrorMessages = {
+  "auth/invalid-credential": wrongCredentials,
+  "auth/wrong-password": wrongCredentials,
+  "auth/user-not-found": wrongCredentials,
+  "auth/invalid-email": "Ingresa un correo electrónico válido.",
+  "auth/user-disabled": "Esta cuenta está deshabilitada. Contacta al administrador.",
+  "auth/too-many-requests": "Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.",
+  "auth/network-request-failed": "No hay conexión. Revisa tu red e inténtalo de nuevo.",
+};
+
 const formatPrice = (amount) => `$${Number(amount || 0).toLocaleString("es-CO")}`;
+const priceSummary = (product, sizes) => getAvailableSizes(product, sizes)
+  .map((size) => `${size} ${formatPrice(getSizePrice(product, size))}`)
+  .join(" · ") || "Sin precio";
 const formatDate = (value) => value?.toDate
   ? value.toDate().toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" })
   : "Fecha no disponible";
@@ -50,7 +67,7 @@ const initialProduct = {
   descripcion: "",
   referencia: "",
   imagen: "",
-  precio: "",
+  precios: {},
   categoriaId: "",
   popular: false,
   activo: true,
@@ -182,6 +199,7 @@ function ProductManager({ data, busy, onSave, onDelete }) {
   const [editingId, setEditingId] = useState("");
   const [showForm, setShowForm] = useState(false);
   const activeCategories = data.categories.filter((category) => category.activa !== false);
+  const sizes = data.store.tamanos ?? [];
 
   useEffect(() => {
     if (!form.categoriaId && activeCategories.length) {
@@ -196,7 +214,7 @@ function ProductManager({ data, busy, onSave, onDelete }) {
       descripcion: product.descripcion ?? "",
       referencia: product.referencia ?? "",
       imagen: product.imagen ?? "",
-      precio: String(product.precio ?? ""),
+      precios: Object.fromEntries(sizes.map((size) => [size, String(getSizePrice(product, size) ?? "")])),
       categoriaId: activeCategories.some((category) => category.id === product.categoriaId)
         ? product.categoriaId
         : activeCategories[0]?.id ?? "",
@@ -214,9 +232,16 @@ function ProductManager({ data, busy, onSave, onDelete }) {
 
   function submit(event) {
     event.preventDefault();
-    const price = Number(form.precio);
-    if (!Number.isSafeInteger(price) || price < 0) {
-      onSave(null, "El precio debe ser un valor entero no negativo en COP.");
+    // Un tamaño sin precio no se ofrece para este producto.
+    const prices = Object.fromEntries(sizes
+      .filter((size) => String(form.precios[size] ?? "").trim() !== "")
+      .map((size) => [size, Number(form.precios[size])]));
+    if (Object.keys(prices).length === 0) {
+      onSave(null, "Define el precio de al menos un tamaño.");
+      return;
+    }
+    if (Object.values(prices).some((price) => !Number.isSafeInteger(price) || price < 0)) {
+      onSave(null, "Los precios deben ser valores enteros no negativos en COP.");
       return;
     }
     try {
@@ -230,7 +255,7 @@ function ProductManager({ data, busy, onSave, onDelete }) {
       descripcion: form.descripcion.trim(),
       referencia: form.referencia.trim(),
       imagen: form.imagen.trim(),
-      precio: price,
+      precios: prices,
       categoriaId: form.categoriaId,
       popular: form.popular,
       activo: form.activo,
@@ -250,7 +275,13 @@ function ProductManager({ data, busy, onSave, onDelete }) {
           <label>Nombre<input required maxLength="120" value={form.nombre} onChange={(event) => setForm({ ...form, nombre: event.target.value })} /></label>
           <label>Referencia<input required maxLength="40" value={form.referencia} onChange={(event) => setForm({ ...form, referencia: event.target.value })} /></label>
           <label className="staff-field-wide">Descripción<textarea required maxLength="500" rows="2" value={form.descripcion} onChange={(event) => setForm({ ...form, descripcion: event.target.value })} /></label>
-          <label>Precio (COP)<input type="number" min="0" step="1" required value={form.precio} onChange={(event) => setForm({ ...form, precio: event.target.value })} /></label>
+          {sizes.map((size) => (
+            <label key={size}>Precio {size} (COP)<input type="number" min="0" step="1" placeholder="No disponible" value={form.precios[size] ?? ""} onChange={(event) => setForm({ ...form, precios: { ...form.precios, [size]: event.target.value } })} /></label>
+          ))}
+          {editingId && !data.products.find((product) => product.id === editingId)?.precios && (
+            <p className="staff-muted staff-field-wide">Este producto aún tiene un solo precio para todos los tamaños. Ajusta el precio de cada tamaño y guarda.</p>
+          )}
+          <p className="staff-muted staff-field-wide">Deja vacío un tamaño para no ofrecerlo en este producto.</p>
           <label>Categoría<select required value={form.categoriaId} onChange={(event) => setForm({ ...form, categoriaId: event.target.value })}>{activeCategories.map((category) => <option key={category.id} value={category.id}>{category.nombre}</option>)}</select></label>
           <label className="staff-field-wide">Imagen HTTPS<input type="url" required value={form.imagen} onChange={(event) => setForm({ ...form, imagen: event.target.value })} /></label>
           <label className="staff-check"><input type="checkbox" checked={form.popular} onChange={(event) => setForm({ ...form, popular: event.target.checked })} /> Producto popular</label>
@@ -268,7 +299,7 @@ function ProductManager({ data, busy, onSave, onDelete }) {
             <div className="staff-record-copy">
               <strong>{product.nombre}</strong>
               <span>Ref. {product.referencia} · {data.categories.find((category) => category.id === product.categoriaId)?.nombre ?? "Sin categoría"}</span>
-              <span>{formatPrice(product.precio)} · {product.activo === false ? "No publicado" : "Publicado"}</span>
+              <span>{priceSummary(product, sizes)} · {product.activo === false ? "No publicado" : "Publicado"}</span>
             </div>
             <div className="staff-record-actions">
               <button className="staff-secondary-button" type="button" onClick={() => edit(product)}>Editar</button>
@@ -573,7 +604,7 @@ function ReadOnlyCatalog({ data }) {
         {products.map((product) => (
           <article className="staff-record" key={product.id}>
             <div className="staff-record-copy"><strong>{product.nombre}</strong><span>Ref. {product.referencia} · {data.categories.find((category) => category.id === product.categoriaId)?.nombre ?? "Sin categoría"}</span><span>{product.descripcion}</span></div>
-            <strong className="staff-product-price">{formatPrice(product.precio)}</strong>
+            <strong className="staff-product-price">{priceSummary(product, data.store.tamanos ?? [])}</strong>
           </article>
         ))}
       </div>
@@ -654,10 +685,7 @@ export default function StaffPortal() {
       await signInStaff(email, password);
     } catch (loginError) {
       console.error("No se pudo iniciar sesión del personal:", loginError);
-      const message = loginError.code === "auth/invalid-credential"
-        ? "Correo o contraseña incorrectos."
-        : loginError.message || "No se pudo iniciar sesión.";
-      setError(message);
+      setError(loginErrorMessages[loginError.code] || loginError.message || "No se pudo iniciar sesión.");
     } finally {
       setLoginBusy(false);
     }
