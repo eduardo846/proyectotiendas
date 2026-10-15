@@ -253,7 +253,7 @@ export async function getStaffData(role) {
     getDocs(role === "admin"
       ? query(promotionCollection, orderBy("orden"))
       : query(promotionCollection, where("activa", "==", true))),
-    getDocs(query(collection(db, "pedidos"), orderBy("creadoEn", "desc"))),
+    getDocs(query(collection(db, "pedidos"), orderBy("creadoEn", "asc"))),
   ]);
   if (!storeSnapshot.exists()) throw new Error("Falta el documento de configuración de la tienda.");
   return {
