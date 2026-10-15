@@ -39,6 +39,7 @@ export default function App() {
   const [form, setForm] = useState({ name: "", phone: "", payment: "", notes: "" });
   const [toast, setToast] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [heroSlideIndex, setHeroSlideIndex] = useState(0);
   const categoryNavRef = useRef(null);
   const [categoryScroll, setCategoryScroll] = useState({ left: false, right: false });
 
@@ -94,6 +95,11 @@ export default function App() {
       getAvailableSizes(product, data.tienda.tamanos).length > 0),
     [data],
   );
+  const heroSlides = useMemo(() => {
+    const imageProducts = products.filter((product) => typeof product.imagen === "string" && product.imagen.trim());
+    const popularProducts = imageProducts.filter((product) => product.popular);
+    return (popularProducts.length > 1 ? popularProducts : imageProducts).slice(0, 4);
+  }, [products]);
   const totals = useMemo(
     () => (store ? getTotals(cart, products, store) : { count: 0, subtotal: 0, delivery: 0, total: 0 }),
     [cart, products, store],
@@ -102,6 +108,16 @@ export default function App() {
   useEffect(() => {
     if (totals.count === 0) setCartOpen(false);
   }, [totals.count]);
+
+  useEffect(() => {
+    if (heroSlides.length < 2 || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return undefined;
+    }
+    const timer = window.setInterval(() => {
+      setHeroSlideIndex((current) => (current + 1) % heroSlides.length);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [heroSlides]);
 
   const filteredProducts = useMemo(() => {
     const searchTerm = normalize(query.trim());
@@ -271,6 +287,21 @@ export default function App() {
     <main className="page-shell">
       <section className="store-card" aria-label={store.nombre}>
         <header className="hero">
+          {heroSlides.length > 0 && (
+            <div className="hero-background" aria-hidden="true">
+              {heroSlides.map((product, index) => (
+                <img
+                  className={index === heroSlideIndex ? "is-active" : ""}
+                  key={product.id}
+                  src={product.imagen}
+                  alt=""
+                  loading={index === 0 ? "eager" : "lazy"}
+                  decoding="async"
+                  onError={(event) => { event.currentTarget.style.display = "none"; }}
+                />
+              ))}
+            </div>
+          )}
           <span className="hero-kicker">{store.descripcion}</span>
           <div className="brand-mark" aria-label={store.nombre}>🍕</div>
           <h1>{store.nombre}</h1>

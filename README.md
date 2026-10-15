@@ -4,7 +4,7 @@ Tienda web de pizzería hecha con React y Vite. Firebase Firestore sirve el cat�
 
 ## Funcionalidades
 
-- **Tienda (`/`)**: catálogo por categorías con búsqueda por nombre o referencia, precio por tamaño, carrito con costo de envío y envío gratis desde un mínimo, y checkout que guarda la solicitud en Firestore y continúa por WhatsApp con el detalle y el total estimado.
+- **Tienda (`/`)**: encabezado con carrusel automático de imágenes de productos como fondo, catálogo por categorías con búsqueda por nombre o referencia, precio por tamaño, carrito con costo de envío y envío gratis desde un mínimo, y checkout que guarda la solicitud en Firestore y continúa por WhatsApp con el detalle y el total estimado.
 - **Portal del personal (`/staff`)**: inicio de sesión con correo y contraseña.
   - `seller` (vendedor): consulta y actualiza el estado de los pedidos y ve el catálogo con sus precios.
   - `admin` (administrador): además gestiona productos y sus precios por tamaño, categorías, promociones, la configuración de la tienda y los perfiles del personal.
