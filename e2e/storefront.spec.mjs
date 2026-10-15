@@ -42,6 +42,16 @@ test.describe("Catálogo", () => {
     await expect(page.getByRole("heading", { name: expected[0].nombre })).toBeVisible();
   });
 
+  test("la pestaña Popular muestra solo los productos populares", async ({ page }) => {
+    await page.goto("/");
+    const tabs = page.getByRole("navigation", { name: "Categorías" }).getByRole("button");
+    await expect(tabs.nth(1)).toHaveText("Popular");
+    await tabs.nth(1).click();
+    const expected = catalog.productos.filter((product) => product.popular);
+    await expect(page.locator("article.product-card")).toHaveCount(expected.length);
+    await expect(page.locator("article.product-card .popular-badge")).toHaveCount(expected.length);
+  });
+
   test("busca por referencia y sin tildes, y muestra el estado vacío", async ({ page }) => {
     await page.goto("/");
     const search = page.getByRole("searchbox", { name: "Buscar productos" });

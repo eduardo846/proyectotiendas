@@ -10,6 +10,7 @@ import { getAvailableSizes, getSizePrice } from "./pricing.js";
 
 const normalize = (value) =>
   value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+const POPULAR_TAB = "Popular";
 const formatPrice = (amount) => `$${Math.round(amount).toLocaleString("es-CO")}`;
 
 function getTotals(cart, products, store) {
@@ -119,10 +120,19 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [heroSlides]);
 
+  // "Popular" agrupa los productos marcados como populares en el panel; no es una categoría de Firestore.
+  const categoryTabs = useMemo(() => [
+    "Todos",
+    ...(products.some((product) => product.popular) ? [POPULAR_TAB] : []),
+    ...(data?.categorias ?? []).filter((item) => item !== POPULAR_TAB),
+  ], [data, products]);
+
   const filteredProducts = useMemo(() => {
     const searchTerm = normalize(query.trim());
     return products.filter((product) => {
-      const categoryMatches = category === "Todos" || product.categoria === category;
+      const categoryMatches =
+        category === "Todos" ||
+        (category === POPULAR_TAB ? Boolean(product.popular) : product.categoria === category);
       const searchMatches =
         !searchTerm ||
         [product.nombre, product.descripcion, product.categoria, product.referencia]
@@ -339,7 +349,7 @@ export default function App() {
             ‹
           </button>
           <nav className="category-tabs" aria-label="Categorías" ref={categoryNavRef}>
-            {["Todos", ...data.categorias].map((item) => (
+            {categoryTabs.map((item) => (
               <button
                 className={`category-tab${category === item ? " selected" : ""}`}
                 key={item}
