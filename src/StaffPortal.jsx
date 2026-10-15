@@ -504,9 +504,6 @@ function OrderList({ orders, products, canUpdateOrders, isAdmin, busy, onStatusC
             : "pendiente_revision";
           const selectedStatus = statusDrafts[order.id] ?? storedStatus;
           const canEditStatus = canUpdateOrders && (isAdmin || !finalOrderStatuses.has(storedStatus));
-          const availableStatuses = isAdmin
-            ? orderStatuses
-            : orderStatuses.filter((status) => !finalOrderStatuses.has(status.value));
           return (
             <article className="staff-order" key={order.id}>
               <header><div><strong>Pedido {order.id}</strong><span>{formatDate(order.creadoEn)}</span></div><span className={`staff-status staff-status-${selectedStatus}`}>{orderStatusLabel(selectedStatus)}</span></header>
@@ -518,7 +515,7 @@ function OrderList({ orders, products, canUpdateOrders, isAdmin, busy, onStatusC
                       disabled={busy}
                       onChange={(event) => setStatusDrafts((current) => ({ ...current, [order.id]: event.target.value }))}
                     >
-                      {availableStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+                      {orderStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
                     </select>
                   </label>
                   <button
