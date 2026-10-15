@@ -69,6 +69,8 @@ Sin variables Firebase, la tienda muestra el catálogo local como vista previa y
    npx firebase-tools deploy --only hosting
    ```
 
+   Para publicar en Netlify, usa `npm run build` como comando de compilación y `dist` como directorio de publicación. El archivo `public/_redirects` mantiene las rutas de React, como `/staff`, disponibles al abrirlas directamente.
+
 ## Esquema de Firestore
 
 - `configuracion/tienda`: nombre, identidad, WhatsApp, tamaños, moneda y tarifas de envío.
