@@ -488,7 +488,7 @@ function StaffUserManager({ users, usersLoaded, currentUid, busy, onCreate, onUp
   );
 }
 
-function OrderList({ orders, products, isAdmin, busy, onStatusChange }) {
+function OrderList({ orders, products, canUpdateOrders, busy, onStatusChange }) {
   const [statusDrafts, setStatusDrafts] = useState({});
   const productsById = new Map(products.map((product) => [String(product.id), product]));
   if (!orders.length) return <section className="staff-panel"><div className="staff-panel-heading"><div><p className="staff-eyebrow">Pedidos recibidos</p><h2>Pedidos</h2></div></div><p className="staff-muted">Todavía no hay pedidos registrados.</p></section>;
@@ -504,7 +504,7 @@ function OrderList({ orders, products, isAdmin, busy, onStatusChange }) {
           return (
             <article className="staff-order" key={order.id}>
               <header><div><strong>Pedido {order.id}</strong><span>{formatDate(order.creadoEn)}</span></div><span className={`staff-status staff-status-${selectedStatus}`}>{orderStatusLabel(selectedStatus)}</span></header>
-              {isAdmin && (
+              {canUpdateOrders && (
                 <div className="staff-order-status-controls">
                   <label>Estado del pedido
                     <select
@@ -809,8 +809,8 @@ export default function StaffPortal() {
   }
 
   async function changeOrderStatus(orderId, status, onSuccess) {
-    if (role !== "admin") {
-      setError("Solo un administrador puede cambiar el estado de un pedido.");
+    if (role !== "admin" && role !== "seller") {
+      setError("Se requiere un perfil activo de personal para cambiar el estado del pedido.");
       return;
     }
     await perform(
@@ -888,7 +888,7 @@ export default function StaffPortal() {
         {tab === "orders" && <OrderList
           orders={data.orders}
           products={data.products}
-          isAdmin={isAdmin}
+          canUpdateOrders={isAdmin || role === "seller"}
           busy={busy}
           onStatusChange={changeOrderStatus}
         />}

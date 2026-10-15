@@ -138,7 +138,7 @@ service cloud.firestore {
     match /pedidos/{orderId} {
       allow read: if hasStaffRole();
       allow create: if validOrderRequest();
-      allow update: if isAdmin() &&
+      allow update: if hasStaffRole() &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           'estado', 'estadoActualizadoEn'
         ]) &&
