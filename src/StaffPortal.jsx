@@ -493,12 +493,20 @@ function StaffUserManager({ users, usersLoaded, currentUid, busy, onCreate, onUp
 function OrderList({ orders, products, canUpdateOrders, isAdmin, busy, onStatusChange }) {
   const [statusDrafts, setStatusDrafts] = useState({});
   const productsById = new Map(products.map((product) => [String(product.id), product]));
-  if (!orders.length) return <section className="staff-panel"><div className="staff-panel-heading"><div><p className="staff-eyebrow">Pedidos recibidos</p><h2>Pedidos</h2></div></div><p className="staff-muted">Todavía no hay pedidos registrados.</p></section>;
+  const visibleOrders = isAdmin
+    ? orders
+    : orders.filter((order) => order.estado !== "entregado");
+  if (!visibleOrders.length) {
+    const emptyMessage = orders.length && !isAdmin
+      ? "No hay pedidos pendientes de atención."
+      : "Todavía no hay pedidos registrados.";
+    return <section className="staff-panel"><div className="staff-panel-heading"><div><p className="staff-eyebrow">Pedidos recibidos</p><h2>Pedidos</h2></div></div><p className="staff-muted">{emptyMessage}</p></section>;
+  }
   return (
     <section className="staff-panel">
-      <div className="staff-panel-heading"><div><p className="staff-eyebrow">{orders.length} pedidos</p><h2>Pedidos recibidos</h2></div></div>
+      <div className="staff-panel-heading"><div><p className="staff-eyebrow">{visibleOrders.length} pedidos</p><h2>Pedidos recibidos</h2></div></div>
       <div className="staff-order-list">
-        {orders.map((order) => {
+        {visibleOrders.map((order) => {
           const storedStatus = orderStatuses.some((entry) => entry.value === order.estado)
             ? order.estado
             : "pendiente_revision";
