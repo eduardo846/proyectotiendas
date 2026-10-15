@@ -206,6 +206,10 @@ export default function App() {
         metodoPago: form.payment,
         ...(form.notes.trim() ? { notas: form.notes.trim() } : {}),
       });
+      setCart({});
+      setForm({ name: "", phone: "", payment: "", notes: "" });
+      setCartOpen(false);
+      setToast("Solicitud guardada. El pedido se limpió y se abrirá WhatsApp.");
       const estimatedItems = requestedItems.map((item) => {
         const product = products.find((entry) => String(entry.id) === item.productoId);
         return `• ${product.nombre} (Ref. ${product.referencia} · Tamaño ${item.tamano}) x${item.cantidad} — ${formatPrice(product.precio * item.cantidad)}`;
