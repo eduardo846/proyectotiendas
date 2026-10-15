@@ -127,6 +127,7 @@
 .staff-status-preparando { background: #e9efff; color: #344b88; }
 .staff-status-en_camino { background: #e7f4f5; color: #21646b; }
 .staff-status-cancelado { background: #ffebe8; color: #9b3426; }
+.staff-status-cerrado { background: #ece9e6; color: #51443d; }
 .staff-order-status-controls { display: flex; align-items: flex-end; gap: 9px; margin-top: 12px; }
 .staff-order-status-controls label { display: grid; flex: 1; gap: 5px; color: var(--muted); font-size: 11px; font-weight: 700; }
 .staff-order-status-controls select { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--ink); font: inherit; font-size: 12px; }

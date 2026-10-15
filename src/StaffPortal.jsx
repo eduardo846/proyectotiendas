@@ -28,8 +28,10 @@ const orderStatuses = [
   { value: "preparando", label: "En preparación" },
   { value: "en_camino", label: "En camino" },
   { value: "entregado", label: "Entregado" },
+  { value: "cerrado", label: "Cerrado" },
   { value: "cancelado", label: "Cancelado" },
 ];
+const finalOrderStatuses = new Set(["entregado", "cerrado"]);
 const orderStatusLabel = (status) =>
   orderStatuses.find((entry) => entry.value === status)?.label ?? status ?? "Pendiente de revisión";
 
@@ -488,7 +490,7 @@ function StaffUserManager({ users, usersLoaded, currentUid, busy, onCreate, onUp
   );
 }
 
-function OrderList({ orders, products, canUpdateOrders, busy, onStatusChange }) {
+function OrderList({ orders, products, canUpdateOrders, isAdmin, busy, onStatusChange }) {
   const [statusDrafts, setStatusDrafts] = useState({});
   const productsById = new Map(products.map((product) => [String(product.id), product]));
   if (!orders.length) return <section className="staff-panel"><div className="staff-panel-heading"><div><p className="staff-eyebrow">Pedidos recibidos</p><h2>Pedidos</h2></div></div><p className="staff-muted">Todavía no hay pedidos registrados.</p></section>;
@@ -501,10 +503,14 @@ function OrderList({ orders, products, canUpdateOrders, busy, onStatusChange }) 
             ? order.estado
             : "pendiente_revision";
           const selectedStatus = statusDrafts[order.id] ?? storedStatus;
+          const canEditStatus = canUpdateOrders && (isAdmin || !finalOrderStatuses.has(storedStatus));
+          const availableStatuses = isAdmin
+            ? orderStatuses
+            : orderStatuses.filter((status) => !finalOrderStatuses.has(status.value));
           return (
             <article className="staff-order" key={order.id}>
               <header><div><strong>Pedido {order.id}</strong><span>{formatDate(order.creadoEn)}</span></div><span className={`staff-status staff-status-${selectedStatus}`}>{orderStatusLabel(selectedStatus)}</span></header>
-              {canUpdateOrders && (
+              {canEditStatus && (
                 <div className="staff-order-status-controls">
                   <label>Estado del pedido
                     <select
@@ -512,7 +518,7 @@ function OrderList({ orders, products, canUpdateOrders, busy, onStatusChange }) 
                       disabled={busy}
                       onChange={(event) => setStatusDrafts((current) => ({ ...current, [order.id]: event.target.value }))}
                     >
-                      {orderStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+                      {availableStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
                     </select>
                   </label>
                   <button
@@ -530,6 +536,9 @@ function OrderList({ orders, products, canUpdateOrders, busy, onStatusChange }) 
                     Guardar estado
                   </button>
                 </div>
+              )}
+              {canUpdateOrders && !isAdmin && finalOrderStatuses.has(storedStatus) && (
+                <p className="staff-order-unverified">Solo un administrador puede modificar pedidos entregados o cerrados.</p>
               )}
               <div className="staff-order-customer"><strong>{order.cliente?.nombre || "Cliente"}</strong><a href={`tel:${order.cliente?.telefono ?? ""}`}>{order.cliente?.telefono || "Sin teléfono"}</a></div>
               {order.preciosVerificados === false && <p className="staff-order-unverified">Solicitud recibida desde la tienda. Verifica los productos y precios del catálogo antes de confirmar el total con el cliente.</p>}
@@ -889,6 +898,7 @@ export default function StaffPortal() {
           orders={data.orders}
           products={data.products}
           canUpdateOrders={isAdmin || role === "seller"}
+          isAdmin={isAdmin}
           busy={busy}
           onStatusChange={changeOrderStatus}
         />}

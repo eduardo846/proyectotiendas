@@ -111,6 +111,7 @@ service cloud.firestore {
         'preparando',
         'en_camino',
         'entregado',
+        'cerrado',
         'cancelado'
       ];
     }
@@ -147,6 +148,9 @@ service cloud.firestore {
         ]) &&
         validOrderStatus(request.resource.data.estado) &&
         request.resource.data.estado != resource.data.estado &&
+        (isAdmin() ||
+          (!(resource.data.estado in ['entregado', 'cerrado']) &&
+            !(request.resource.data.estado in ['entregado', 'cerrado']))) &&
         request.resource.data.estadoActualizadoEn == request.time;
       allow delete: if false;
     }
