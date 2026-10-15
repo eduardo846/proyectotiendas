@@ -1,0 +1,195 @@
+{
+  "tienda": {
+    "nombre": "Forno Bello",
+    "slogan": "Pizza artesanal al horno de leña — masa madre fermentada 48h",
+    "descripcion": "Pizzería artesanal · Est. 2018",
+    "whatsapp": "573001112233",
+    "rating": "4.9",
+    "pedidos": "5100+",
+    "tiempoEntrega": "25–40 min",
+    "envioGratis": 90000,
+    "costoEnvio": 6000,
+    "promoTexto": "Pide 2 pizzas familiares y accede a precio combo especial",
+    "promoBadge": "COMBO",
+    "tamanos": ["Personal", "Mediana", "Familiar"]
+  },
+  "categorias": [
+    "Clásicas",
+    "Especiales",
+    "Vegetarianas",
+    "Picantes",
+    "Gourmet"
+  ],
+  "productos": [
+    {
+      "id": 1,
+      "categoria": "Clásicas",
+      "imagen": "https://previews.123rf.com/images/whitestorm/whitestorm2109/whitestorm210900075/173801651-assortment-of-traditional-italian-pizza-with-vegetables-olives-tomatoes-and-ham-pinsa-romana.jpg",
+      "nombre": "Pizza Margarita",
+      "descripcion": "Salsa de tomate, mozzarella fresca y albahaca",
+      "precio": 32000,
+      "popular": true,
+      "referencia": "FB-101"
+    },
+    {
+      "id": 2,
+      "categoria": "Clásicas",
+      "imagen": "https://previews.123rf.com/images/dash/dash2001/dash200100119/138174215-three-different-kind-of-pizzas-in-delivery-boxes-placed-in-a-row-on-brown-wooden-background-view.jpg",
+      "nombre": "Pizza Pepperoni",
+      "descripcion": "Doble pepperoni y mozzarella derretida",
+      "precio": 36000,
+      "popular": true,
+      "referencia": "FB-102"
+    },
+    {
+      "id": 3,
+      "categoria": "Clásicas",
+      "imagen": "https://previews.123rf.com/images/lobachad/lobachad2105/lobachad210500861/169452833-lots-of-delicious-triangular-pizza-slices-on-a-blue-wooden-background.jpg",
+      "nombre": "Pizza Napolitana",
+      "descripcion": "Al horno de leña, mozzarella fresca y albahaca",
+      "precio": 34000,
+      "popular": false,
+      "referencia": "FB-103"
+    },
+    {
+      "id": 4,
+      "categoria": "Clásicas",
+      "imagen": "https://previews.123rf.com/images/sabrinaumansky/sabrinaumansky2411/sabrinaumansky241100087/238432891-a-variety-of-mini-pizzas-are-attractively-arranged-on-a-wooden-table-each-pizza-features-an-array.jpg",
+      "nombre": "Pizza Cuatro Quesos",
+      "descripcion": "Mezcla de quesos gratinados, aceitunas y albahaca",
+      "precio": 38000,
+      "popular": false,
+      "referencia": "FB-104"
+    },
+    {
+      "id": 5,
+      "categoria": "Especiales",
+      "imagen": "https://previews.123rf.com/images/serezniy/serezniy2201/serezniy220110703/180914481-board-with-slices-of-tasty-pizza-on-color-background.jpg",
+      "nombre": "Pizza BBQ Pollo",
+      "descripcion": "Pollo a la parrilla, pimentones y cebolla",
+      "precio": 39000,
+      "popular": true,
+      "referencia": "FB-105"
+    },
+    {
+      "id": 6,
+      "categoria": "Especiales",
+      "imagen": "https://previews.123rf.com/images/roxiller/roxiller2101/roxiller210100023/161575027-flat-lay-of-different-types-of-pizza-and-red-wine-over-white-table-top-view-fast-food-lunch.jpg",
+      "nombre": "Pizza BBQ de Res",
+      "descripcion": "Carne de res desmechada en salsa BBQ",
+      "precio": 40000,
+      "popular": false,
+      "referencia": "FB-106"
+    },
+    {
+      "id": 7,
+      "categoria": "Especiales",
+      "imagen": "https://previews.123rf.com/images/dasha11/dasha111410/dasha11141000069/32705506-image-of-teenage-friends-hands-taking-slices-of-pizza.jpg",
+      "nombre": "Pizza Blanca con Maíz y Tomate",
+      "descripcion": "Base blanca, maíz tierno y tomate fresco",
+      "precio": 35000,
+      "popular": false,
+      "referencia": "FB-107"
+    },
+    {
+      "id": 8,
+      "categoria": "Especiales",
+      "imagen": "https://previews.123rf.com/images/fotoatelie/fotoatelie1702/fotoatelie170200041/72207387-slices-of-pizza-on-cardboard-top-view-close-up.jpg",
+      "nombre": "Pizza Capricciosa",
+      "descripcion": "Jamón, champiñones, pimentón y aceitunas",
+      "precio": 37000,
+      "popular": true,
+      "referencia": "FB-108"
+    },
+    {
+      "id": 9,
+      "categoria": "Vegetarianas",
+      "imagen": "https://previews.123rf.com/images/maryka26/maryka262404/maryka26240400303/228700114-pizza-with-juicy-ingredients-illustration.jpg",
+      "nombre": "Pizza Funghi",
+      "descripcion": "Champiñones frescos, cebolla morada y tomate cherry",
+      "precio": 34000,
+      "popular": false,
+      "referencia": "FB-109"
+    },
+    {
+      "id": 10,
+      "categoria": "Vegetarianas",
+      "imagen": "https://previews.123rf.com/images/aksakalko/aksakalko1701/aksakalko170100175/70723487-two-big-hot-and-tasty-pizzas-with-olives-mushrooms-and-salami.jpg",
+      "nombre": "Pizza Spinaci",
+      "descripcion": "Espinaca fresca, ricotta y queso de cabra",
+      "precio": 36000,
+      "popular": false,
+      "referencia": "FB-110"
+    },
+    {
+      "id": 11,
+      "categoria": "Vegetarianas",
+      "imagen": "https://previews.123rf.com/images/bravissimos/bravissimos1512/bravissimos151200085/49079285-top-view-two-pizza-with-mushrooms-olives-and-tomatoes-basil-rosemary-and-fresh-vegetables.jpg",
+      "nombre": "Pizza Vegetariana",
+      "descripcion": "Pimentones, cebolla morada y aceitunas negras",
+      "precio": 34000,
+      "popular": true,
+      "referencia": "FB-111"
+    },
+    {
+      "id": 12,
+      "categoria": "Vegetarianas",
+      "imagen": "https://previews.123rf.com/images/lobachad/lobachad2105/lobachad210500465/169177534-two-different-delicious-big-pizzas-on-a-blue-wooden-background.jpg",
+      "nombre": "Pizza Tomate Cherry y Pimientos",
+      "descripcion": "Jamón, champiñones, tomate cherry y tiras de pimiento",
+      "precio": 35000,
+      "popular": false,
+      "referencia": "FB-112"
+    },
+    {
+      "id": 13,
+      "categoria": "Picantes",
+      "imagen": "https://previews.123rf.com/images/andreonegin/andreonegin2003/andreonegin200300316/143248589-two-raw-pizza-with-gorgonzola-cheese-and-pear-on-a-metal-plate-ready-to-cook-standing-on-wooden.jpg",
+      "nombre": "Pizza Diávola",
+      "descripcion": "Pepperoni, aceitunas negras y perejil fresco",
+      "precio": 37000,
+      "popular": true,
+      "referencia": "FB-113"
+    },
+    {
+      "id": 14,
+      "categoria": "Picantes",
+      "imagen": "https://previews.123rf.com/images/lobachad/lobachad2105/lobachad210500384/169178012-lots-of-delicious-triangular-pizza-slices-on-a-blue-wooden-background.jpg",
+      "nombre": "Pizza Especial de la Casa",
+      "descripcion": "Jamón, champiñones y ají picante sobre masa artesanal",
+      "precio": 39000,
+      "popular": false,
+      "referencia": "FB-114"
+    },
+    {
+      "id": 15,
+      "categoria": "Gourmet",
+      "imagen": "https://previews.123rf.com/images/illiabondar/illiabondar2009/illiabondar200900338/165350402-open-boxes-with-hot-tasty-italian-sliced-pizzas-on-black-background.jpg",
+      "nombre": "Pizza Prosciutto y Rúcula",
+      "descripcion": "Prosciutto, rúcula fresca y parmesano",
+      "precio": 42000,
+      "popular": true,
+      "referencia": "FB-115"
+    },
+    {
+      "id": 16,
+      "categoria": "Gourmet",
+      "imagen": "https://previews.123rf.com/images/artemidovna/artemidovna2005/artemidovna200500169/146999919-pizza-in-the-in-delivery-box-different-delicious-pizzas-with-variety-of-toppings-and-cheese-in.jpg",
+      "nombre": "Pizza Rúcula, Parmesano y Piñones",
+      "descripcion": "Carne a la parrilla, rúcula, piñones y parmesano",
+      "precio": 44000,
+      "popular": false,
+      "referencia": "FB-116"
+    },
+    {
+      "id": 17,
+      "categoria": "Gourmet",
+      "imagen": "https://previews.123rf.com/images/troyka/troyka2206/troyka220600014/187156723-chorizo-pizza-baked-with-tomatoes-and-mozzarella-on-black-slate-board-selective-focus.jpg",
+      "nombre": "Pizza Margarita Personal",
+      "descripcion": "Versión individual de nuestra clásica margarita",
+      "precio": 22000,
+      "popular": false,
+      "referencia": "FB-117"
+    }
+  ]
+}

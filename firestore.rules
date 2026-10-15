@@ -1,0 +1,91 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function staffProfilePath(uid) {
+      return /databases/$(database)/documents/usuarios/$(uid);
+    }
+
+    function hasActiveStaffProfile() {
+      return request.auth != null &&
+        exists(staffProfilePath(request.auth.uid)) &&
+        get(staffProfilePath(request.auth.uid)).data.activo == true &&
+        get(staffProfilePath(request.auth.uid)).data.rol in ['admin', 'seller'];
+    }
+
+    function hasStaffRole() {
+      return request.auth != null &&
+        (exists(staffProfilePath(request.auth.uid))
+          ? hasActiveStaffProfile()
+          : request.auth.token.role in ['admin', 'seller']);
+    }
+
+    function isAdmin() {
+      return request.auth != null &&
+        (exists(staffProfilePath(request.auth.uid))
+          ? hasActiveStaffProfile() &&
+            get(staffProfilePath(request.auth.uid)).data.rol == 'admin'
+          : request.auth.token.role == 'admin');
+    }
+
+    match /configuracion/{documentId} {
+      allow read: if documentId == 'tienda';
+      allow write: if documentId == 'tienda' && isAdmin();
+    }
+
+    match /categorias/{categoryId} {
+      allow read: if resource.data.activa == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /productos/{productId} {
+      allow read: if resource.data.activo == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /promociones/{promotionId} {
+      allow read: if resource.data.activa == true || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /pedidos/{orderId} {
+      allow read: if hasStaffRole();
+      allow write: if false;
+    }
+
+    match /usuarios/{userId} {
+      allow read: if isAdmin() ||
+        (request.auth != null && request.auth.uid == userId);
+      allow create: if isAdmin() &&
+        request.resource.data.keys().hasOnly([
+          'email', 'nombre', 'rol', 'activo', 'creadoEn', 'creadoPor', 'actualizadoEn'
+        ]) &&
+        request.resource.data.keys().hasAll([
+          'email', 'nombre', 'rol', 'activo', 'creadoEn', 'creadoPor', 'actualizadoEn'
+        ]) &&
+        request.resource.data.email is string &&
+        request.resource.data.email.size() <= 254 &&
+        request.resource.data.nombre is string &&
+        request.resource.data.nombre.size() <= 120 &&
+        request.resource.data.rol in ['admin', 'seller'] &&
+        request.resource.data.activo == true &&
+        request.resource.data.creadoPor == request.auth.uid;
+      allow update: if isAdmin() &&
+        request.auth.uid != userId &&
+        resource.data.rol in ['admin', 'seller'] &&
+        request.resource.data.rol in ['admin', 'seller'] &&
+        request.resource.data.keys().hasOnly([
+          'email', 'nombre', 'rol', 'activo', 'creadoEn', 'creadoPor', 'actualizadoEn'
+        ]) &&
+        request.resource.data.keys().hasAll([
+          'email', 'nombre', 'rol', 'activo', 'creadoEn', 'creadoPor', 'actualizadoEn'
+        ]) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'nombre', 'rol', 'activo', 'actualizadoEn'
+        ]) &&
+        request.resource.data.nombre is string &&
+        request.resource.data.nombre.size() <= 120 &&
+        request.resource.data.activo is bool;
+      allow delete: if false;
+    }
+  }
+}
