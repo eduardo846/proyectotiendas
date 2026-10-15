@@ -14,8 +14,6 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore/lite";
-import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
-import { getFunctions, httpsCallable } from "firebase/functions";
 import {
   getAuth,
   onAuthStateChanged,
@@ -35,22 +33,13 @@ const firebaseConfig = {
 
 const requiredConfig = Object.values(firebaseConfig);
 export const isFirebaseConfigured = requiredConfig.every((value) => Boolean(value?.trim()));
-export const isAppCheckConfigured = Boolean(import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY?.trim());
 
 const app = isFirebaseConfigured ? initializeApp(firebaseConfig) : null;
-const functionsRegion = "us-central1";
-if (app && isAppCheckConfigured) {
-  initializeAppCheck(app, {
-    provider: new ReCaptchaEnterpriseProvider(import.meta.env.VITE_RECAPTCHA_ENTERPRISE_SITE_KEY),
-    isTokenAutoRefreshEnabled: true,
-  });
-}
 const db = app ? getFirestore(app) : null;
-const functions = app ? getFunctions(app, functionsRegion) : null;
 const auth = app ? getAuth(app) : null;
 
 function requireFirebase() {
-  if (!db || !functions) throw new Error("Firebase no está configurado.");
+  if (!db) throw new Error("Firebase no está configurado.");
 }
 
 function requireAuth() {
@@ -330,12 +319,23 @@ export async function removeStaffPromotion(promotionId) {
   await deleteDoc(doc(db, "promociones", promotionId));
 }
 
-export async function saveOrder(order) {
+export async function savePendingOrder(order) {
   requireFirebase();
-  if (!isAppCheckConfigured) {
-    throw new Error("Configura VITE_RECAPTCHA_ENTERPRISE_SITE_KEY para habilitar pedidos protegidos.");
+  if (!order || !Array.isArray(order.items) || order.items.length < 1 || order.items.length > 30) {
+    throw new Error("El pedido debe tener entre 1 y 30 productos.");
   }
-  const createOrder = httpsCallable(functions, "createOrder");
-  const result = await createOrder(order);
-  return result.data;
+  if (order.items.some((item) =>
+    !Number.isInteger(item.cantidad) || item.cantidad < 1 || item.cantidad > 50 ||
+    typeof item.productoId !== "string" || !/^[A-Za-z0-9_-]{1,100}$/.test(item.productoId) ||
+    typeof item.tamano !== "string" || item.tamano.length < 1 || item.tamano.length > 40
+  )) {
+    throw new Error("El pedido contiene un producto, tamaño o cantidad no válidos.");
+  }
+  const orderRef = await addDoc(collection(db, "pedidos"), {
+    ...order,
+    estado: "pendiente_revision",
+    preciosVerificados: false,
+    creadoEn: serverTimestamp(),
+  });
+  return { id: orderRef.id };
 }

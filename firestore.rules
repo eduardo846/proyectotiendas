@@ -27,6 +27,83 @@ service cloud.firestore {
           : request.auth.token.role == 'admin');
     }
 
+    function validOrderItem(item) {
+      return item is map &&
+        item.keys().hasOnly(['productoId', 'tamano', 'cantidad']) &&
+        item.keys().hasAll(['productoId', 'tamano', 'cantidad']) &&
+        item.productoId is string &&
+        item.productoId.matches('^[A-Za-z0-9_-]{1,100}$') &&
+        item.tamano is string &&
+        item.tamano.size() > 0 &&
+        item.tamano.size() <= 40 &&
+        item.cantidad is int &&
+        item.cantidad >= 1 &&
+        item.cantidad <= 50;
+    }
+
+    function validOrderItems(items) {
+      return items is list &&
+        items.size() >= 1 &&
+        items.size() <= 30 &&
+        (items.size() < 1 || validOrderItem(items[0])) &&
+        (items.size() < 2 || validOrderItem(items[1])) &&
+        (items.size() < 3 || validOrderItem(items[2])) &&
+        (items.size() < 4 || validOrderItem(items[3])) &&
+        (items.size() < 5 || validOrderItem(items[4])) &&
+        (items.size() < 6 || validOrderItem(items[5])) &&
+        (items.size() < 7 || validOrderItem(items[6])) &&
+        (items.size() < 8 || validOrderItem(items[7])) &&
+        (items.size() < 9 || validOrderItem(items[8])) &&
+        (items.size() < 10 || validOrderItem(items[9])) &&
+        (items.size() < 11 || validOrderItem(items[10])) &&
+        (items.size() < 12 || validOrderItem(items[11])) &&
+        (items.size() < 13 || validOrderItem(items[12])) &&
+        (items.size() < 14 || validOrderItem(items[13])) &&
+        (items.size() < 15 || validOrderItem(items[14])) &&
+        (items.size() < 16 || validOrderItem(items[15])) &&
+        (items.size() < 17 || validOrderItem(items[16])) &&
+        (items.size() < 18 || validOrderItem(items[17])) &&
+        (items.size() < 19 || validOrderItem(items[18])) &&
+        (items.size() < 20 || validOrderItem(items[19])) &&
+        (items.size() < 21 || validOrderItem(items[20])) &&
+        (items.size() < 22 || validOrderItem(items[21])) &&
+        (items.size() < 23 || validOrderItem(items[22])) &&
+        (items.size() < 24 || validOrderItem(items[23])) &&
+        (items.size() < 25 || validOrderItem(items[24])) &&
+        (items.size() < 26 || validOrderItem(items[25])) &&
+        (items.size() < 27 || validOrderItem(items[26])) &&
+        (items.size() < 28 || validOrderItem(items[27])) &&
+        (items.size() < 29 || validOrderItem(items[28])) &&
+        (items.size() < 30 || validOrderItem(items[29]));
+    }
+
+    function validOrderRequest() {
+      let data = request.resource.data;
+      return data.keys().hasOnly([
+          'cliente', 'items', 'metodoPago', 'notas', 'estado',
+          'preciosVerificados', 'creadoEn'
+        ]) &&
+        data.keys().hasAll([
+          'cliente', 'items', 'metodoPago', 'estado',
+          'preciosVerificados', 'creadoEn'
+        ]) &&
+        data.cliente is map &&
+        data.cliente.keys().hasOnly(['nombre', 'telefono']) &&
+        data.cliente.keys().hasAll(['nombre', 'telefono']) &&
+        data.cliente.nombre is string &&
+        data.cliente.nombre.size() > 0 &&
+        data.cliente.nombre.size() <= 120 &&
+        data.cliente.telefono is string &&
+        data.cliente.telefono.matches('^[+0-9(). -]{7,24}$') &&
+        validOrderItems(data.items) &&
+        data.metodoPago in ['Nequi', 'Transferencia', 'Efectivo'] &&
+        (!('notas' in data) || (data.notas is string && data.notas.size() <= 1000)) &&
+        data.estado == 'pendiente_revision' &&
+        data.preciosVerificados == false &&
+        data.creadoEn is timestamp &&
+        data.creadoEn <= request.time;
+    }
+
     match /configuracion/{documentId} {
       allow read: if documentId == 'tienda';
       allow write: if documentId == 'tienda' && isAdmin();
@@ -49,7 +126,8 @@ service cloud.firestore {
 
     match /pedidos/{orderId} {
       allow read: if hasStaffRole();
-      allow write: if false;
+      allow create: if validOrderRequest();
+      allow update, delete: if false;
     }
 
     match /usuarios/{userId} {

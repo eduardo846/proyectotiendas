@@ -2,9 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import localCatalog from "../catalogo.json";
 import {
   getStoreData,
-  isAppCheckConfigured,
   isFirebaseConfigured,
-  saveOrder,
+  savePendingOrder,
 } from "./firebase.js";
 
 const normalize = (value) =>
@@ -58,7 +57,7 @@ export default function App() {
           setData(localCatalog);
           setFirestoreReady(false);
           setBackendIssue(
-            "Firestore no está disponible. Puedes explorar el catálogo, pero los pedidos quedan deshabilitados hasta crear la base de datos y cargar el menú.",
+            "No se pudo conectar con Firestore. Revisa la configuración, las reglas y los datos del catálogo; no se pueden enviar solicitudes por ahora.",
           );
         }
       });
@@ -178,6 +177,11 @@ export default function App() {
       setToast("Conecta Firebase para guardar y enviar el pedido.");
       return;
     }
+    const cartItems = Object.values(cart);
+    if (cartItems.length > 30 || cartItems.some((item) => item.quantity > 50)) {
+      setToast("El pedido admite hasta 30 productos distintos y 50 unidades de cada uno.");
+      return;
+    }
 
     const whatsappWindow = window.open("", "_blank");
     if (!whatsappWindow) {
@@ -186,7 +190,7 @@ export default function App() {
     }
 
     setSubmitting(true);
-    const requestedItems = Object.values(cart).map((item) => {
+    const requestedItems = cartItems.map((item) => {
       const product = products.find((entry) => entry.id === item.id);
       return {
         productoId: String(product.id),
@@ -196,29 +200,37 @@ export default function App() {
     });
 
     try {
-      const order = await saveOrder({
+      const request = await savePendingOrder({
         cliente: { nombre: form.name.trim(), telefono: phone },
         items: requestedItems,
         metodoPago: form.payment,
         ...(form.notes.trim() ? { notas: form.notes.trim() } : {}),
       });
+      const estimatedItems = requestedItems.map((item) => {
+        const product = products.find((entry) => String(entry.id) === item.productoId);
+        return `• ${product.nombre} (Ref. ${product.referencia} · Tamaño ${item.tamano}) x${item.cantidad} — ${formatPrice(product.precio * item.cantidad)}`;
+      });
+      const estimatedSubtotal = requestedItems.reduce((subtotal, item) => {
+        const product = products.find((entry) => String(entry.id) === item.productoId);
+        return subtotal + product.precio * item.cantidad;
+      }, 0);
+      const estimatedDelivery = estimatedSubtotal >= store.envioGratis ? 0 : store.costoEnvio;
       const message = [
-        `🍕 *Nuevo pedido — ${store.nombre}*`,
+        `🍕 *Solicitud de pedido — ${store.nombre}*`,
+        "_Precios y disponibilidad pendientes de confirmación de la tienda._",
         "",
-        ...(form.name.trim() ? [`👤 *Cliente:* ${form.name.trim()}`] : []),
+        `👤 *Cliente:* ${form.name.trim()}`,
         `📱 *Contacto:* ${phone}`,
         `💳 *Pago:* ${form.payment}`,
         "",
         "*Detalle:*",
-        ...order.items.map((item) =>
-          `• ${item.nombre} (Ref. ${item.referencia} · Tamaño ${item.tamano}) x${item.cantidad} — ${formatPrice(item.totalLinea)}`,
-        ),
+        ...estimatedItems,
         "",
-        `🚚 *Envío:* ${order.envio === 0 ? "Gratis" : formatPrice(order.envio)}`,
-        `💰 *Total:* ${formatPrice(order.total)}`,
+        `🚚 *Envío estimado:* ${estimatedDelivery === 0 ? "Gratis" : formatPrice(estimatedDelivery)}`,
+        `💰 *Total estimado:* ${formatPrice(estimatedSubtotal + estimatedDelivery)}`,
         ...(form.notes.trim() ? ["", `📝 *Notas:* ${form.notes.trim()}`] : []),
-        `\n_N.º pedido: ${order.id}_`,
-        `_Pedido desde ${store.nombre} Online_ 🍕`,
+        `\n_Referencia de solicitud: ${request.id}_`,
+        `_Pedido desde ${store.nombre} Online. Espera confirmación del precio final._ 🍕`,
       ].join("\n");
       whatsappWindow.opener = null;
       whatsappWindow.location.href =
@@ -474,8 +486,8 @@ export default function App() {
               <label>Dirección de entrega y notas
                 <textarea value={form.notes} onChange={(event) => setForm({ ...form, notes: event.target.value })} placeholder="Dirección, apartamento u observaciones" maxLength={1000} />
               </label>
-              <button className="whatsapp-button" type="submit" disabled={submitting || !firestoreReady || !isAppCheckConfigured}>
-                {submitting ? "Guardando pedido…" : !firestoreReady ? "Firestore no está disponible" : !isAppCheckConfigured ? "Configura App Check para confirmar" : "Guardar y continuar por WhatsApp"}
+                      <button className="whatsapp-button" type="submit" disabled={submitting || !firestoreReady}>
+                        {submitting ? "Guardando solicitud…" : !firestoreReady ? "Firestore no está disponible" : "Guardar solicitud y continuar por WhatsApp"}
               </button>
             </form>
           </section>

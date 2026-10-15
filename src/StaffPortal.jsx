@@ -476,7 +476,8 @@ function StaffUserManager({ users, usersLoaded, currentUid, busy, onCreate, onUp
   );
 }
 
-function OrderList({ orders }) {
+function OrderList({ orders, products }) {
+  const productsById = new Map(products.map((product) => [String(product.id), product]));
   if (!orders.length) return <section className="staff-panel"><div className="staff-panel-heading"><div><p className="staff-eyebrow">Pedidos recibidos</p><h2>Pedidos</h2></div></div><p className="staff-muted">Todavía no hay pedidos registrados.</p></section>;
   return (
     <section className="staff-panel">
@@ -486,9 +487,15 @@ function OrderList({ orders }) {
           <article className="staff-order" key={order.id}>
             <header><div><strong>Pedido {order.id}</strong><span>{formatDate(order.creadoEn)}</span></div><span className={`staff-status staff-status-${order.estado ?? "pendiente"}`}>{order.estado ?? "pendiente"}</span></header>
             <div className="staff-order-customer"><strong>{order.cliente?.nombre || "Cliente"}</strong><a href={`tel:${order.cliente?.telefono ?? ""}`}>{order.cliente?.telefono || "Sin teléfono"}</a></div>
-            <ul>{(order.items ?? []).map((item, index) => <li key={`${item.productoId}-${item.tamano}-${index}`}><span>{item.cantidad} × {item.nombre} · {item.tamano}</span><strong>{formatPrice(item.totalLinea)}</strong></li>)}</ul>
+            {order.preciosVerificados === false && <p className="staff-order-unverified">Solicitud recibida desde la tienda. Verifica los productos y precios del catálogo antes de confirmar el total con el cliente.</p>}
+            <ul>{(order.items ?? []).map((item, index) => {
+              const product = productsById.get(String(item.productoId));
+              const name = item.nombre ?? product?.nombre ?? `Producto ${item.productoId}`;
+              const lineTotal = order.preciosVerificados === false ? null : item.totalLinea;
+              return <li key={`${item.productoId}-${item.tamano}-${index}`}><span>{item.cantidad} × {name} · {item.tamano}</span><strong>{lineTotal == null ? "Por validar" : formatPrice(lineTotal)}</strong></li>;
+            })}</ul>
             {order.notas && <p className="staff-order-notes"><strong>Notas / dirección:</strong> {order.notas}</p>}
-            <footer><span>{order.metodoPago}</span><strong>Total {formatPrice(order.total)}</strong></footer>
+            <footer><span>{order.metodoPago}</span><strong>{order.preciosVerificados === false ? "Total por validar" : `Total ${formatPrice(order.total)}`}</strong></footer>
           </article>
         ))}
       </div>
@@ -820,7 +827,7 @@ export default function StaffPortal() {
         </nav>
         {error && <div className="staff-alert" role="alert">{error}</div>}
         {notice && <div className="staff-success" role="status">{notice}</div>}
-        {tab === "orders" && <OrderList orders={data.orders} />}
+        {tab === "orders" && <OrderList orders={data.orders} products={data.products} />}
         {tab === "products" && (isAdmin
           ? <ProductManager data={data} busy={busy} onSave={saveProduct} onDelete={deleteProduct} />
           : <ReadOnlyCatalog data={data} />)}

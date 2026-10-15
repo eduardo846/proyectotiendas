@@ -123,6 +123,8 @@
 .staff-order > header div span, .staff-order-customer a, .staff-order > footer > span { color: var(--muted); font-size: 11px; }
 .staff-status { padding: 5px 9px; border-radius: 999px; background: #fff3cf; color: #694916; font-size: 10px; font-weight: 800; text-transform: capitalize; }
 .staff-status-confirmado, .staff-status-entregado { background: #edf7ec; color: #245532; }
+.staff-status-pendiente_revision { background: #fff0dc; color: #9a4a18; }
+.staff-order-unverified { margin: 12px 0; padding: 10px 12px; border: 1px solid #e8ceaa; border-radius: 8px; background: #fff8e8; color: #694916; font-size: 12px; line-height: 1.5; }
 .staff-order-customer { display: flex; justify-content: space-between; gap: 12px; margin: 14px 0 9px; font-size: 12px; }
 .staff-order-customer a { color: var(--basil-dark); font-weight: 700; }
 .staff-order ul { display: grid; gap: 7px; margin: 0; padding: 12px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); list-style: none; }
