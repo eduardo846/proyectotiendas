@@ -104,6 +104,17 @@ service cloud.firestore {
         data.creadoEn <= request.time;
     }
 
+    function validOrderStatus(status) {
+      return status in [
+        'pendiente_revision',
+        'confirmado',
+        'preparando',
+        'en_camino',
+        'entregado',
+        'cancelado'
+      ];
+    }
+
     match /configuracion/{documentId} {
       allow read: if documentId == 'tienda';
       allow write: if documentId == 'tienda' && isAdmin();
@@ -127,7 +138,17 @@ service cloud.firestore {
     match /pedidos/{orderId} {
       allow read: if hasStaffRole();
       allow create: if validOrderRequest();
-      allow update, delete: if false;
+      allow update: if isAdmin() &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'estado', 'estadoActualizadoEn'
+        ]) &&
+        request.resource.data.diff(resource.data).affectedKeys().hasAll([
+          'estado', 'estadoActualizadoEn'
+        ]) &&
+        validOrderStatus(request.resource.data.estado) &&
+        request.resource.data.estado != resource.data.estado &&
+        request.resource.data.estadoActualizadoEn == request.time;
+      allow delete: if false;
     }
 
     match /usuarios/{userId} {

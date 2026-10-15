@@ -17,9 +17,21 @@ import {
   sendStaffPasswordReset,
   signInStaff,
   signOutStaff,
+  updateStaffOrderStatus,
   updateStaffUserProfile,
 } from "./firebase.js";
 import "./staff.css";
+
+const orderStatuses = [
+  { value: "pendiente_revision", label: "Pendiente de revisión" },
+  { value: "confirmado", label: "Confirmado" },
+  { value: "preparando", label: "En preparación" },
+  { value: "en_camino", label: "En camino" },
+  { value: "entregado", label: "Entregado" },
+  { value: "cancelado", label: "Cancelado" },
+];
+const orderStatusLabel = (status) =>
+  orderStatuses.find((entry) => entry.value === status)?.label ?? status ?? "Pendiente de revisión";
 
 const formatPrice = (amount) => `$${Number(amount || 0).toLocaleString("es-CO")}`;
 const formatDate = (value) => value?.toDate
@@ -476,28 +488,62 @@ function StaffUserManager({ users, usersLoaded, currentUid, busy, onCreate, onUp
   );
 }
 
-function OrderList({ orders, products }) {
+function OrderList({ orders, products, isAdmin, busy, onStatusChange }) {
+  const [statusDrafts, setStatusDrafts] = useState({});
   const productsById = new Map(products.map((product) => [String(product.id), product]));
   if (!orders.length) return <section className="staff-panel"><div className="staff-panel-heading"><div><p className="staff-eyebrow">Pedidos recibidos</p><h2>Pedidos</h2></div></div><p className="staff-muted">Todavía no hay pedidos registrados.</p></section>;
   return (
     <section className="staff-panel">
       <div className="staff-panel-heading"><div><p className="staff-eyebrow">{orders.length} pedidos</p><h2>Pedidos recibidos</h2></div></div>
       <div className="staff-order-list">
-        {orders.map((order) => (
-          <article className="staff-order" key={order.id}>
-            <header><div><strong>Pedido {order.id}</strong><span>{formatDate(order.creadoEn)}</span></div><span className={`staff-status staff-status-${order.estado ?? "pendiente"}`}>{order.estado ?? "pendiente"}</span></header>
-            <div className="staff-order-customer"><strong>{order.cliente?.nombre || "Cliente"}</strong><a href={`tel:${order.cliente?.telefono ?? ""}`}>{order.cliente?.telefono || "Sin teléfono"}</a></div>
-            {order.preciosVerificados === false && <p className="staff-order-unverified">Solicitud recibida desde la tienda. Verifica los productos y precios del catálogo antes de confirmar el total con el cliente.</p>}
-            <ul>{(order.items ?? []).map((item, index) => {
-              const product = productsById.get(String(item.productoId));
-              const name = item.nombre ?? product?.nombre ?? `Producto ${item.productoId}`;
-              const lineTotal = order.preciosVerificados === false ? null : item.totalLinea;
-              return <li key={`${item.productoId}-${item.tamano}-${index}`}><span>{item.cantidad} × {name} · {item.tamano}</span><strong>{lineTotal == null ? "Por validar" : formatPrice(lineTotal)}</strong></li>;
-            })}</ul>
-            {order.notas && <p className="staff-order-notes"><strong>Notas / dirección:</strong> {order.notas}</p>}
-            <footer><span>{order.metodoPago}</span><strong>{order.preciosVerificados === false ? "Total por validar" : `Total ${formatPrice(order.total)}`}</strong></footer>
-          </article>
-        ))}
+        {orders.map((order) => {
+          const storedStatus = orderStatuses.some((entry) => entry.value === order.estado)
+            ? order.estado
+            : "pendiente_revision";
+          const selectedStatus = statusDrafts[order.id] ?? storedStatus;
+          return (
+            <article className="staff-order" key={order.id}>
+              <header><div><strong>Pedido {order.id}</strong><span>{formatDate(order.creadoEn)}</span></div><span className={`staff-status staff-status-${selectedStatus}`}>{orderStatusLabel(selectedStatus)}</span></header>
+              {isAdmin && (
+                <div className="staff-order-status-controls">
+                  <label>Estado del pedido
+                    <select
+                      value={selectedStatus}
+                      disabled={busy}
+                      onChange={(event) => setStatusDrafts((current) => ({ ...current, [order.id]: event.target.value }))}
+                    >
+                      {orderStatuses.map((status) => <option key={status.value} value={status.value}>{status.label}</option>)}
+                    </select>
+                  </label>
+                  <button
+                    className="staff-primary-button"
+                    type="button"
+                    disabled={busy || selectedStatus === storedStatus}
+                    onClick={() => onStatusChange(order.id, selectedStatus, () => {
+                      setStatusDrafts((current) => {
+                        const next = { ...current };
+                        delete next[order.id];
+                        return next;
+                      });
+                    })}
+                  >
+                    Guardar estado
+                  </button>
+                </div>
+              )}
+              <div className="staff-order-customer"><strong>{order.cliente?.nombre || "Cliente"}</strong><a href={`tel:${order.cliente?.telefono ?? ""}`}>{order.cliente?.telefono || "Sin teléfono"}</a></div>
+              {order.preciosVerificados === false && <p className="staff-order-unverified">Solicitud recibida desde la tienda. Verifica los productos y precios del catálogo antes de confirmar el total con el cliente.</p>}
+              <ul>{(order.items ?? []).map((item, index) => {
+                const product = productsById.get(String(item.productoId));
+                const name = item.nombre ?? product?.nombre ?? `Producto ${item.productoId}`;
+                const lineTotal = order.preciosVerificados === false ? null : item.totalLinea;
+                return <li key={`${item.productoId}-${item.tamano}-${index}`}><span>{item.cantidad} × {name} · {item.tamano}</span><strong>{lineTotal == null ? "Por validar" : formatPrice(lineTotal)}</strong></li>;
+              })}</ul>
+              {order.notas && <p className="staff-order-notes"><strong>Notas / dirección:</strong> {order.notas}</p>}
+              <footer><span>{order.metodoPago}</span><strong>{order.preciosVerificados === false ? "Total por validar" : `Total ${formatPrice(order.total)}`}</strong></footer>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
@@ -762,6 +808,18 @@ export default function StaffPortal() {
     await perform(() => saveStoreSettings(settings), "Configuración actualizada.");
   }
 
+  async function changeOrderStatus(orderId, status, onSuccess) {
+    if (role !== "admin") {
+      setError("Solo un administrador puede cambiar el estado de un pedido.");
+      return;
+    }
+    await perform(
+      () => updateStaffOrderStatus(orderId, status),
+      "Estado del pedido actualizado.",
+      onSuccess,
+    );
+  }
+
   async function logout() {
     try {
       await signOutStaff();
@@ -827,7 +885,13 @@ export default function StaffPortal() {
         </nav>
         {error && <div className="staff-alert" role="alert">{error}</div>}
         {notice && <div className="staff-success" role="status">{notice}</div>}
-        {tab === "orders" && <OrderList orders={data.orders} products={data.products} />}
+        {tab === "orders" && <OrderList
+          orders={data.orders}
+          products={data.products}
+          isAdmin={isAdmin}
+          busy={busy}
+          onStatusChange={changeOrderStatus}
+        />}
         {tab === "products" && (isAdmin
           ? <ProductManager data={data} busy={busy} onSave={saveProduct} onDelete={deleteProduct} />
           : <ReadOnlyCatalog data={data} />)}

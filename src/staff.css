@@ -124,6 +124,13 @@
 .staff-status { padding: 5px 9px; border-radius: 999px; background: #fff3cf; color: #694916; font-size: 10px; font-weight: 800; text-transform: capitalize; }
 .staff-status-confirmado, .staff-status-entregado { background: #edf7ec; color: #245532; }
 .staff-status-pendiente_revision { background: #fff0dc; color: #9a4a18; }
+.staff-status-preparando { background: #e9efff; color: #344b88; }
+.staff-status-en_camino { background: #e7f4f5; color: #21646b; }
+.staff-status-cancelado { background: #ffebe8; color: #9b3426; }
+.staff-order-status-controls { display: flex; align-items: flex-end; gap: 9px; margin-top: 12px; }
+.staff-order-status-controls label { display: grid; flex: 1; gap: 5px; color: var(--muted); font-size: 11px; font-weight: 700; }
+.staff-order-status-controls select { width: 100%; min-height: 38px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--ink); font: inherit; font-size: 12px; }
+.staff-order-status-controls select:disabled { cursor: not-allowed; opacity: .65; }
 .staff-order-unverified { margin: 12px 0; padding: 10px 12px; border: 1px solid #e8ceaa; border-radius: 8px; background: #fff8e8; color: #694916; font-size: 12px; line-height: 1.5; }
 .staff-order-customer { display: flex; justify-content: space-between; gap: 12px; margin: 14px 0 9px; font-size: 12px; }
 .staff-order-customer a { color: var(--basil-dark); font-weight: 700; }
@@ -165,5 +172,7 @@
   .staff-panel-heading { align-items: flex-start; }
   .staff-panel-heading h2 { font-size: 18px; }
   .staff-order-customer { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .staff-order-status-controls { align-items: stretch; flex-direction: column; }
+  .staff-order-status-controls > button { align-self: flex-start; }
   .staff-order li { align-items: flex-start; }
 }

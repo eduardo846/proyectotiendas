@@ -339,3 +339,23 @@ export async function savePendingOrder(order) {
   });
   return { id: orderRef.id };
 }
+
+export async function updateStaffOrderStatus(orderId, status) {
+  requireFirebase();
+  requireAuth();
+  const statuses = [
+    "pendiente_revision",
+    "confirmado",
+    "preparando",
+    "en_camino",
+    "entregado",
+    "cancelado",
+  ];
+  if (typeof orderId !== "string" || !orderId || !statuses.includes(status)) {
+    throw new Error("El pedido o el estado seleccionado no es válido.");
+  }
+  await updateDoc(doc(db, "pedidos", orderId), {
+    estado: status,
+    estadoActualizadoEn: serverTimestamp(),
+  });
+}
