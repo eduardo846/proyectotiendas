@@ -319,15 +319,21 @@ export async function removeStaffPromotion(promotionId) {
   await deleteDoc(doc(db, "promociones", promotionId));
 }
 
+// Debe coincidir con validOrderItems en firestore.rules, limitado por el máximo
+// de 1000 expresiones que Firestore evalúa por petición.
+export const MAX_ORDER_LINES = 15;
+
 export async function savePendingOrder(order) {
   requireFirebase();
-  if (!order || !Array.isArray(order.items) || order.items.length < 1 || order.items.length > 30) {
-    throw new Error("El pedido debe tener entre 1 y 30 productos.");
+  if (!order || !Array.isArray(order.items) || order.items.length < 1 ||
+      order.items.length > MAX_ORDER_LINES) {
+    throw new Error(`El pedido debe tener entre 1 y ${MAX_ORDER_LINES} productos distintos.`);
   }
   if (order.items.some((item) =>
     !Number.isInteger(item.cantidad) || item.cantidad < 1 || item.cantidad > 50 ||
     typeof item.productoId !== "string" || !/^[A-Za-z0-9_-]{1,100}$/.test(item.productoId) ||
-    typeof item.tamano !== "string" || item.tamano.length < 1 || item.tamano.length > 40
+    typeof item.tamano !== "string" || item.tamano.length < 1 || item.tamano.length > 40 ||
+    item.tamano.includes("|")
   )) {
     throw new Error("El pedido contiene un producto, tamaño o cantidad no válidos.");
   }

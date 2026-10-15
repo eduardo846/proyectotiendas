@@ -3,6 +3,7 @@ import localCatalog from "../catalogo.json";
 import {
   getStoreData,
   isFirebaseConfigured,
+  MAX_ORDER_LINES,
   savePendingOrder,
 } from "./firebase.js";
 
@@ -178,8 +179,8 @@ export default function App() {
       return;
     }
     const cartItems = Object.values(cart);
-    if (cartItems.length > 30 || cartItems.some((item) => item.quantity > 50)) {
-      setToast("El pedido admite hasta 30 productos distintos y 50 unidades de cada uno.");
+    if (cartItems.length > MAX_ORDER_LINES || cartItems.some((item) => item.quantity > 50)) {
+      setToast(`El pedido admite hasta ${MAX_ORDER_LINES} productos distintos y 50 unidades de cada uno.`);
       return;
     }
 

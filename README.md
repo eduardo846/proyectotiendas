@@ -35,6 +35,14 @@ Sin variables Firebase, la tienda muestra el catálogo local como vista previa y
 
    Las reglas permiten al público leer solo categorías, productos y promociones activas. Los clientes anónimos pueden crear solicitudes de pedido con campos limitados, pero no pueden leer, editar ni borrar pedidos. Solo `admin` puede gestionar catálogo, promociones, configuración y perfiles de personal. `seller` puede leer pedidos y catálogo activo. Las solicitudes públicas quedan `pendiente_revision`: solo guardan IDs de producto, tamaño y cantidad; no se confía en precios ni totales enviados por el navegador y el personal debe verificarlos en el catálogo antes de confirmar el precio con el cliente.
 
+   Antes de publicar cambios en las reglas, ejecuta las pruebas de seguridad en el emulador de Firestore (requiere Java 11 o posterior; no usa el proyecto real):
+
+   ```bash
+   npm run test:rules
+   ```
+
+   Las pruebas marcadas como `todo` documentan riesgos conocidos que las reglas aún no cubren y no hacen fallar la ejecución. Una solicitud admite hasta 15 líneas distintas (producto y tamaño) porque Firestore evalúa como máximo 1000 expresiones por petición; `MAX_ORDER_LINES` en `src/firebase.js` debe coincidir con `validOrderItems` en `firestore.rules`.
+
    En un proyecto nuevo, inicializa el primer perfil administrador desde Firebase Console en Firestore, en `usuarios/{UID}`. Crea la cuenta en Authentication y un documento con campos `email` (string), `nombre` (string), `rol` (`admin`), `activo` (true), `creadoEn` (timestamp), `creadoPor` (string) y `actualizadoEn` (timestamp). Firebase Console utiliza privilegios administrativos y puede crear este perfil inicial sin reglas. El administrador existente de este proyecto ya tiene un custom claim `admin` y puede registrar su perfil en el panel si hace falta.
 
    Para agregar una persona, crea su cuenta en Authentication, copia el UID de Firebase Console y registra en el panel exactamente ese UID y correo. Las cuentas deben crearse primero porque el panel no tiene permisos para crear ni borrar usuarios de Authentication. **Quitar acceso** desactiva el perfil de Firestore inmediatamente, conserva el registro y los pedidos, y permite reactivar el acceso después. Para dar de baja completamente una cuenta, desactívala o elimínala también en Firebase Console.

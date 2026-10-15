@@ -27,24 +27,20 @@ service cloud.firestore {
           : request.auth.token.role == 'admin');
     }
 
+    // Firestore evalúa como máximo 1000 expresiones por petición. Cada línea
+    // se valida con una sola expresión regular sobre sus tres campos unidos
+    // (falla si falta alguno o no es texto) para admitir pedidos de varias líneas.
     function validOrderItem(item) {
-      return item is map &&
-        item.keys().hasOnly(['productoId', 'tamano', 'cantidad']) &&
-        item.keys().hasAll(['productoId', 'tamano', 'cantidad']) &&
-        item.productoId is string &&
-        item.productoId.matches('^[A-Za-z0-9_-]{1,100}$') &&
-        item.tamano is string &&
-        item.tamano.size() > 0 &&
-        item.tamano.size() <= 40 &&
+      return item.keys().hasOnly(['productoId', 'tamano', 'cantidad']) &&
         item.cantidad is int &&
-        item.cantidad >= 1 &&
-        item.cantidad <= 50;
+        (item.productoId + '|' + item.tamano + '|' + string(item.cantidad))
+          .matches('^[A-Za-z0-9_-]{1,100}[|][^|]{1,40}[|]([1-9]|[1-4][0-9]|50)$');
     }
 
     function validOrderItems(items) {
       return items is list &&
         items.size() >= 1 &&
-        items.size() <= 30 &&
+        items.size() <= 15 &&
         (items.size() < 1 || validOrderItem(items[0])) &&
         (items.size() < 2 || validOrderItem(items[1])) &&
         (items.size() < 3 || validOrderItem(items[2])) &&
@@ -59,22 +55,7 @@ service cloud.firestore {
         (items.size() < 12 || validOrderItem(items[11])) &&
         (items.size() < 13 || validOrderItem(items[12])) &&
         (items.size() < 14 || validOrderItem(items[13])) &&
-        (items.size() < 15 || validOrderItem(items[14])) &&
-        (items.size() < 16 || validOrderItem(items[15])) &&
-        (items.size() < 17 || validOrderItem(items[16])) &&
-        (items.size() < 18 || validOrderItem(items[17])) &&
-        (items.size() < 19 || validOrderItem(items[18])) &&
-        (items.size() < 20 || validOrderItem(items[19])) &&
-        (items.size() < 21 || validOrderItem(items[20])) &&
-        (items.size() < 22 || validOrderItem(items[21])) &&
-        (items.size() < 23 || validOrderItem(items[22])) &&
-        (items.size() < 24 || validOrderItem(items[23])) &&
-        (items.size() < 25 || validOrderItem(items[24])) &&
-        (items.size() < 26 || validOrderItem(items[25])) &&
-        (items.size() < 27 || validOrderItem(items[26])) &&
-        (items.size() < 28 || validOrderItem(items[27])) &&
-        (items.size() < 29 || validOrderItem(items[28])) &&
-        (items.size() < 30 || validOrderItem(items[29]));
+        (items.size() < 15 || validOrderItem(items[14]));
     }
 
     function validOrderRequest() {
@@ -101,7 +82,7 @@ service cloud.firestore {
         data.estado == 'pendiente_revision' &&
         data.preciosVerificados == false &&
         data.creadoEn is timestamp &&
-        data.creadoEn <= request.time;
+        data.creadoEn == request.time;
     }
 
     function validOrderStatus(status) {

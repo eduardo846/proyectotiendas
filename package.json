@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "seed:catalog": "node functions/seed-firestore.mjs"
+    "seed:catalog": "node functions/seed-firestore.mjs",
+    "test:rules": "node tests/run-rules-tests.mjs"
   },
   "dependencies": {
     "firebase": "^12.10.0",
@@ -16,6 +17,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^6.1.2",
+    "firebase-tools": "^13.35.1",
     "vite": "^8.3.4"
   },
   "overrides": {
